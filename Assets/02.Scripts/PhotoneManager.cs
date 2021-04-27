@@ -29,6 +29,13 @@ public class PhotoneManager : MonoBehaviourPunCallbacks
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
         Debug.Log($"code = {returnCode}, msg = {message}");   
+
+        //룸 옵션설정
+        RoomOptions ro = new RoomOptions();
+        ro.IsOpen = true;
+        ro.IsVisible = true;
+        ro.MaxPlayers = 30;
+
         //룸 생성
         PhotonNetwork.CreateRoom("My Room");
 
