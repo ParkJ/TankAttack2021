@@ -12,6 +12,8 @@ public class TankCtrl : MonoBehaviour
 
     public Transform firePos;
     public GameObject cannon;
+    
+    public Transform cannonMesh;
 
     // Start is called before the first frame update
     void Start()
@@ -41,11 +43,16 @@ public class TankCtrl : MonoBehaviour
             tr.Translate(Vector3.forward * Time.deltaTime * v * speed);
             tr.Rotate(Vector3.up * Time.deltaTime * 100.0f * h);
 
+            //포탄 발사 로직
             if(Input.GetMouseButtonDown(0))
-                {
+            {
                      pv.RPC("Fire", RpcTarget.All, null);
                 // Fire();
-                }          
+            }          
+
+            //포신회전 설정.
+            float r = Input.GetAxis("Mouse ScrollWheel");
+            cannonMesh.Rotate(Vector3.right * Time.deltaTime * r * 100.0f);
         }
     }
     [PunRPC]
