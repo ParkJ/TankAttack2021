@@ -4,7 +4,7 @@ using UnityEngine;
 using Photon.Pun;
 using UnityStandardAssets.Utility;
 
-public class TankCtrl : MonoBehaviour
+public class TankCtrl : MonoBehaviour, IPunObservable
 {
     private Transform tr;
     public float speed = 10.0f;
@@ -12,7 +12,7 @@ public class TankCtrl : MonoBehaviour
 
     public Transform firePos;
     public GameObject cannon;
-    
+
     public Transform cannonMesh; //휠
 
     public TMPro.TMP_Text userIdText;
@@ -53,15 +53,28 @@ public class TankCtrl : MonoBehaviour
             tr.Rotate(Vector3.up * Time.deltaTime * 100.0f * h);
 
             //포탄 발사 로직
-            if(Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0))
             {
-                     pv.RPC("Fire", RpcTarget.AllViaServer, pv.Owner.NickName); //발사한 사람을 캣치
+                pv.RPC("Fire", RpcTarget.AllViaServer, pv.Owner.NickName); //발사한 사람을 캣치
                 // Fire();
-            }          
+            }
 
             //포신회전 설정.
             float r = Input.GetAxis("Mouse ScrollWheel");
             cannonMesh.Rotate(Vector3.right * Time.deltaTime * r * 100.0f);
+        }
+        else //PhotonView에서 처리해줬던 clone들의 움직임을 직접 처리
+        {
+            //데드레콕닝 해결 법
+            if ((tr.position - receivePos).sqrMagnitude > 3.0f * 3.0f)
+            {
+                tr.position = receivePos;
+            }
+            else
+            {
+                tr.position = Vector3.Lerp(tr.position, receivePos, Time.deltaTime * 5.0f);
+                tr.rotation = Quaternion.Slerp(tr.rotation, receiveRot, Time.deltaTime * 5.0f);
+            }
         }
     }
     [PunRPC]
@@ -70,6 +83,25 @@ public class TankCtrl : MonoBehaviour
         audio?.PlayOneShot(fireSfx);
         GameObject _cannon = Instantiate(cannon, firePos.position, firePos.rotation);
         _cannon.GetComponent<Cannon>().shooter = shooterName;
-        
+
     }
+
+    //네트워크를 통해서 수신받을 변수
+    Vector3 receivePos = Vector3.zero;
+    Quaternion receiveRot = Quaternion.identity;//
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting) //PhotonVuew.IsMine = true
+        {
+            stream.SendNext(tr.position); //위치값
+            stream.SendNext(tr.rotation); //회전값
+        }
+        else //두개 전송했기 때문에 두개를 전송 받아야한다.
+        {
+            receivePos = (Vector3)stream.ReceiveNext();
+            receiveRot = (Quaternion)stream.ReceiveNext();
+        }
+    }
+
 }

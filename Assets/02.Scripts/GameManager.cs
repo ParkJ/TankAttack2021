@@ -9,10 +9,18 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviourPunCallbacks
 {
+    [Header("Room Info")]
     public TMP_Text roomNameText;
     public TMP_Text connectInfoText;
     public TMP_Text messageText;
+    
+    [Header("Chattin UI")]
+    public TMP_Text chatListText;
+    public TMP_InputField msgIF; // message Info
+
     public Button exitBotton;
+
+    private PhotonView pv;
 
     public static GameManager instatnce = null;
 
@@ -26,6 +34,9 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void Start()
     {
+        pv = GetComponent<PhotonView>();
+        // pv = photonView; //이것도 가능.
+
         SetRoomInfo();
     }
 
@@ -62,4 +73,17 @@ public class GameManager : MonoBehaviourPunCallbacks
         string msg = $"\n<color=#ff0000>{otherPlayer.NickName}</color> is left room";
         messageText.text += msg;
     }
+
+    public void OnsendClick()
+    {
+        string _msg = $"<color=#00ff00>[{PhotonNetwork.NickName}]</color>{msgIF.text}";
+        pv.RPC("SendChatMessage", RpcTarget.AllBufferedViaServer, _msg);
+    }
+    
+    [PunRPC]
+    void SendChatMessage(string msg)
+    {
+        chatListText.text += $"{msg}\n)";
+    }
+
 }
