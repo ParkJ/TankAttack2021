@@ -6,6 +6,8 @@ using Photon.Pun;
 public class Turret : MonoBehaviour
 {
     private PhotonView pv;
+    // public new AudioSource audio;
+
     // Start is called before the first frame update
     void Start()
     {
